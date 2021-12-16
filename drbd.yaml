@@ -1,0 +1,85 @@
+---
+- hosts: nodes
+  become: yes
+  tasks:
+  - name : add LINBIT PPA for DRBD packages
+    apt_repository:
+      repo: ppa:linbit/linbit-drbd9-stack
+      state: present
+
+  - name: install packages
+    apt:
+      name:
+        - thin-provisioning-tools
+        - drbd-dkms
+        - drbd-utils
+      update_cache: yes
+      state: latest
+
+  - name: restart multipathd after adding drbd blacklist via drbd-utils
+    systemd: name=multipathd state=restarted
+    when: ansible_distribution_release == "Focal"
+
+  - name: configure DRBD device
+    template: src=r0.j2 dest=/etc/drbd.d/r0.res
+    register: drbd0_config
+
+  - name: check for existing DRBD device
+    stat:
+      path: "/dev/drbd0"
+      follow: true
+    register: drbd0_stat
+
+  - name: create drbdpool LVM VG
+    lvg:
+      vg: drbdpool
+      pvs: "{{ drbd_backing_disk }}"
+    when: not drbd0_stat.stat.exists
+
+  - name: create thinpool LVM thinpool
+    lvol:
+      vg: drbdpool
+      thinpool: thinpool
+      size: 99%VG
+    when: not drbd0_stat.stat.exists
+
+  - name: create r0 LVM thin LV
+    lvol:
+      lv: r0
+      thinpool: thinpool
+      vg: drbdpool
+      size: 90g
+    when: not drbd0_stat.stat.exists
+
+  - name: drbdadm create-md
+    shell: drbdadm create-md r0 --force >> /root/linbit-drbd-ansible.log
+    when: not drbd0_stat.stat.exists
+
+  - name: drbdadm up
+    shell: drbdadm up r0 >> /root/linbit-drbd-ansible.log
+    when: not drbd0_stat.stat.exists
+
+  - name: drbdadm adjust existing nodes
+    shell: drbdadm adjust r0 >> /root/linbit-drbd-ansible.log
+    when: drbd0_stat.stat.exists
+
+  - name: wait for DRBD to become fully Connected
+    run_once: true
+    shell: "drbdadm cstate r0 | grep -v 'Connected'"
+    register: connected
+    until: connected.rc != 0
+    retries: 5
+    delay: 10
+    failed_when: "connected.rc !=0 and connected.rc !=1"
+
+  - name: check for Inconsistent/Inconsistent[/...] data
+    run_once: true
+    shell: "drbdadm dstate r0 | grep -xe '\\(Inconsistent[/]*\\)*'"
+    failed_when: "dsinconsistent.rc !=0 and dsinconsistent.rc !=1"
+    register: dsinconsistent
+    ignore_errors: true
+
+  - name: skip DRBD initial sync if all data is inconsistent
+    run_once: true
+    shell: drbdadm new-current-uuid r0 --clear-bitmap >> /root/linbit-ans-drbd.log
+    when: dsinconsistent.rc == 0
