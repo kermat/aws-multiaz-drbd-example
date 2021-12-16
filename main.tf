@@ -241,10 +241,10 @@ resource "aws_autoscaling_group" "drbd-cluster" {
   vpc_zone_identifier  = ["${aws_subnet.pri_sub1.id}","${aws_subnet.pri_sub2.id}","${aws_subnet.pri_sub3.id}"]
   health_check_type    = "EC2"
   suspended_processes  = [
-#    "Launch",
-#    "Terminate",
-#    "AZRebalance",
-#    "HealthCheck",
+    "Launch",
+    "Terminate",
+    "AZRebalance",
+    "HealthCheck",
     "ReplaceUnhealthy",
     "AddToLoadBalancer",
     "AlarmNotification",
