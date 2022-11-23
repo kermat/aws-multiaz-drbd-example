@@ -219,16 +219,17 @@ resource "aws_launch_configuration" "drbd-cluster" {
   instance_type   = var.ec2_type
   key_name        = var.keyname
   security_groups = [aws_security_group.drbd-instance.id]
+  # placeholder for user data script
   user_data       = "${file("init.sh")}"
   root_block_device {
-    volume_type = "gp2"
+    volume_type = var.ebs_type
     volume_size = 20
     encrypted   = true
   }
   ebs_block_device {
     device_name = "/dev/sdf"
-    volume_type = "gp3"
-    volume_size = 100
+    volume_type = var.ebs_type
+    volume_size = var.ebs_size
     encrypted   = true
   }
   lifecycle {
@@ -252,6 +253,7 @@ resource "aws_autoscaling_group" "drbd-cluster" {
     "ScheduledActions",
     "RemoveFromLoadBalancerLowPriority"
   ]
+
   min_size = 3
   max_size = 3
   tag {
@@ -270,12 +272,34 @@ resource "aws_security_group" "drbd-instance" {
     protocol        = "tcp"
     security_groups = [aws_security_group.bastion.id]
   }
+  # LINSTOR ports
+  ingress {
+    from_port       = 3366
+    to_port         = 3367
+    protocol        = "tcp"
+    self            = true
+  }
+  ingress {
+    from_port       = 3370
+    to_port         = 3370
+    protocol        = "tcp"
+    self            = true
+  }
+  # DRBD ports
   ingress {
     from_port = 7000
-    to_port   = 7000
+    to_port   = 8000
     protocol  = "tcp"
     self      = true
   }
+  # Corosync
+  ingress {
+    from_port = 5404
+    to_port   = 5405
+    protocol  = "udp"
+    self      = true
+  }
+  # anything out
   egress {
     from_port        = 0
     to_port          = 0

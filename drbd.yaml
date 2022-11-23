@@ -2,24 +2,6 @@
 - hosts: nodes
   become: yes
   tasks:
-  - name : add LINBIT PPA for DRBD packages
-    apt_repository:
-      repo: ppa:linbit/linbit-drbd9-stack
-      state: present
-
-  - name: install packages
-    apt:
-      name:
-        - thin-provisioning-tools
-        - drbd-dkms
-        - drbd-utils
-      update_cache: yes
-      state: latest
-
-  - name: restart multipathd after adding drbd blacklist via drbd-utils
-    systemd: name=multipathd state=restarted
-    when: ansible_distribution_release == "Focal"
-
   - name: configure DRBD device
     template: src=r0.j2 dest=/etc/drbd.d/r0.res
     register: drbd0_config

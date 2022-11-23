@@ -10,21 +10,34 @@ variable "region" {
 }
 
 variable "ami" {
-  description = "ami for the Ubuntu image specific to region (Ubuntu 18.04+)"
+  description = "LINBIT Ubuntu AMI specific to your region"
   type        = string
-  default     = "ami-0a11efe61747c2317"
+  default     = "ami-0eb6700a9a657a42f"
 }
 
 variable "ec2_type" {
   description = "ec2 instance type"
   type        = string
-  default     = "t2.micro"
+  default     = "t2.small"
 }
 
+variable "ebs_type" {
+  description = "ebs volume type"
+  type        = string
+  default     = "gp3"
+}
+
+variable "ebs_size" {
+  description = "ebs size for DRBD volume in GiB"
+  type        = string
+  default     = 100
+}
+
+# ubuntu 22.04 LTS 64-bit (x86) in us-west-2
 variable "bastion_ami" {
   description = "ami for the bastion host's image specific to region"
   type        = string
-  default     = "ami-0a11efe61747c2317"
+  default     = "ami-0d70546e43a941d70"
 }
 
 variable "bastion_ec2_type" {
@@ -38,41 +51,41 @@ variable "bastion_ec2_type" {
 variable "vpc_cidr" {
   description = "default vpc_cidr_block"
   type        = string
-  default     = "172.16.0.0/16"
+  default     = "172.17.0.0/16"
 }
 
 variable "pub_sub1_cidr_block" {
   description = "regions first AZ subnet eg. us-west-2a"
   type        = string
-  default     = "172.16.1.0/24"
+  default     = "172.17.1.0/24"
 }
 
 variable "pub_sub2_cidr_block" {
   description = "regions second AZ subnet eg. us-west-2b"
   type        = string
-  default     = "172.16.2.0/24"
+  default     = "172.17.2.0/24"
 }
 
 variable "pub_sub3_cidr_block" {
   description = "regions third AZ subnet eg. us-west-2c"
   type        = string
-  default     = "172.16.3.0/24"
+  default     = "172.17.3.0/24"
 }
 
 variable "pri_sub1_cidr_block" {
   description = "regions first AZ subnet eg. us-west-2a"
   type        = string
-  default     = "172.16.101.0/24"
+  default     = "172.17.101.0/24"
 }
 
 variable "pri_sub2_cidr_block" {
   description = "regions first AZ subnet eg. us-west-2b"
   type        = string
-  default     = "172.16.102.0/24"
+  default     = "172.17.102.0/24"
 }
 
 variable "pri_sub3_cidr_block" {
   description = "regions first AZ subnet eg. us-west-2c"
   type        = string
-  default     = "172.16.103.0/24"
+  default     = "172.17.103.0/24"
 }

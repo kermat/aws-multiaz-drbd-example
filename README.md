@@ -26,7 +26,7 @@ It will also write out our Ansible host inventory to `./hosts.ini`.
 You will need to accept the hosts fingerprints before running Ansible. Copy/Paste and accept.
 
 ```
-for n in $(grep -o 172\.16\.10[0-9]*\.[0-9]* hosts.ini); do
+for n in $(grep -o 172\.17\.10[0-9]*\.[0-9]* hosts.ini); do
   ansible -i hosts.ini -a hostname $n;
 done
 ```
